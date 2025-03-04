@@ -1,0 +1,27 @@
+openapi: 3.0.0
+info: 
+  title: Ars Magica Open API
+  version: 1.0.0
+  contact: 
+    name: Antti Kautiainen
+    email: antti@kautiainen.com
+components: 
+tags: 
+  - name: arm5
+    description: Ars Magica 5th Edition
+  - name: arm5de
+    description: Ars Magica Definitite Edition
+  - name: Open License
+    description: "[The Ars Magica Open License](https://atlas-games.com/arsmagica/openars).
+  - name: Open License Logo
+    description: "../resources/arm5openlicenselogo.png"
+  - name: Open License trademark
+    description: "Ars Magica Open License Logo ©2024 Trident, Inc. The Ars Magica Open License Logo, Ars Magica, and Mythic Europe are trademarks of Trident, Inc., and are used with permission."
+  - name: Paradox Interactive trademarks
+    description: “Order of Hermes, Tremere, Doissetep, and Grimgroth are trademarks of Paradox Interactive AB and are used with permission.”
+externalDocs: 
+  - url: https://atlas-games.com/atlas-cms/openars
+    description: Ars Magica 5th Edition Open License details.
+  
+      
+  
