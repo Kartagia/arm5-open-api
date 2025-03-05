@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info: 
+  title: Ars Magica Open API for Spells
+  description: An Open API implementation for Ars Magica spells and strctures necessary for spells.
+  version: 1.0.0
+  contact: 
+    name: "Antti Kautiainen"
+    email: "antti@kautiainen.com"
+    url: "https://github.com/Kartagia/arm5-open-api"
+  license:
+    name: MIT
+security: 
+  -  headerApiKey: []
+paths: 
+  "/arm5/spellguidelines":
+    post: 
+      description: "Adds a new spell guideline.
+
+        If there is a spell guideline with same title, the creation
+        fails, as title is unique property of a spell guideline.
+
+        The GUID associated to the added spell guideline is returned to caller.
+        "
+      operationId: createSpellGuideline
+      summary: Add a new spell guideline.
+      security: 
+        -  cookieApiKey: []
+      tags: 
+        - post
+        - Add
+        - Spell Guideline
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/SpellGuideline"
+      responses: 
+        "200": 
+          $ref: "#/components/responses/CreatedGuid"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+  "/arm5/spellguidelines/{id}":
+    put: 
+      description: "Updates an existing guideline.
+
+        If there is nospell guideline with the GUID, a not found
+        error is returned. 
+        
+        If the spell guideline is referred by an occured event, the 
+        operation causes a conflict on change of any detail causing
+        temporal inconsitency.
+
+        The GUID associated to the updated spell guideline is returned to caller.
+        (The return type is selected to keep both forced update and update on the same page.)
+        "
+      operationId: updateSpellGuideline
+      summary: Add a new spell guideline.
+      security: 
+        -  cookieApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/id"
+      tags: 
+        - post
+        - Add
+        - Spell Guideline
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/SpellGuideline"
+      responses: 
+        "200": 
+          $ref: "#/components/responses/CreatedGuid"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+        
+    get: 
+      description: Retrieve a spell guideline associated with given identifier.
+      summary: Retrieves single spell guideline with an identifier.
+      operationId: getSpellGuidelineById
+      parameters: 
+        - $ref: "#/components/parameters/id"
+      security: 
+        -  http: []
+      tags:
+        - get
+        - Retrieve
+        - Spell Guideline
+      responses:
+        "200": 
+          $ref: "#/components/responses/SpellGuidelineResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+components:
+  responses: 
+    "CreatedGuid":
+      description: The GUID of the successfully created resource.
+      content: 
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+        text/plain:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+    "ConflictingUpdate":
+      description: The update causes a conflict.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: 
+              -  guids
+            properties:
+              guids: 
+                description: The problem causing GUIDS.
+                type: array
+                items: 
+                  $ref: "#/components/schemas/GUID"
+              strict:
+                description: "Is the conflict strict. 
+                
+                  A strict conflict must be handled with forced update
+                  creating new copies of conflicting entities."
+                type: boolean
+        text/plain:
+          schema:
+            type: string
+        text/html:
+          schema: 
+            type: string
+    "SpellGuidelineResponse":
+      description: The retrieved Spell Guideline.
+      content:
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/SpellGuideline"
+    "NotFoundResponse":
+      description: The resource was not found.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                required: 
+                  -  guid
+                properties: 
+                  guid: 
+                    $ref: "#/components/schemas/GUID"
+              - $ref: "#/components/schemas/Error"
+  schemas: 
+    GUID:
+      $ref: "./types.yaml#/components/schemas/GUID"
+    Error:
+      $ref: "./types.yaml#/components/schemas/Error"
+    level:
+      oneOf: 
+        - type: integer
+        - type: string
+          pattern: ^Generic$
+    ArtKey:
+      oneOf: 
+        - $ref: "#/components/schemas/FormKey"
+        - $ref: "#/components/schemas/TechniqueKey"
+    TechniqueKey:
+      type: string
+      pattern: ^[A-Z][a-z]{1,5}$
+    FormKey:
+      type: string
+      pattern: ^\p[A-Z][a-z]{1,5}$
+    SpellGuideline:
+      type: object
+      required: 
+        - title
+        - level
+        - technique
+        - form
+      properties:
+        level:
+          $ref: "#/components/schemas/level"
+        title:
+          type: string
+        technique:
+          oneOf: 
+            - $ref: "#/components/schemas/GUID"
+            - $ref: "#/components/schemas/TechniqueKey"
+          description: "A reference to the form of the guideline"
+        form:
+          oneOf: 
+            - $ref: "#/components/schemas/GUID"
+            - $ref: "#/components/schemas/FormKey"
+          description: "A reference to the technique of the guideline"
+          type: string
+        temporary:
+          type: boolean
+          description: Is the guideline a planned temporary guideline.
+  parameters:
+    id: 
+      name: id
+      description: A GUID idenfifier of an entity.
+      in: path
+      required: true
+      schema: 
+        $ref: "#/components/schemas/GUID"
+  securitySchemes: 
+    cookieApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/cookieApiKey"
+    headerApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/headerApiKey"
+    http:
+      $ref: "journaling.yaml#/components/securitySchemes/http"
+tags:
+  - name: guid
+    description: Global unique identifier.
+  - name: Valid Journal Date String
+    description: A valid journal date string. 
+  - name: get
+    description: GET HTTP method.
+  - name: delete
+    description: DELETE HTTP method.
+  - name: post
+    description: POST HTTP method.
+  - name: put
+    description: PUT HTTP method.
+  - name: Spell Guideline
+    description: The operation affects one or more spell guidelines.
+  - name: Add
+    description: The operation adds one or more resources.
+  - name: Retrieve
+    description: The operation retrieves oen or more resources.
+
