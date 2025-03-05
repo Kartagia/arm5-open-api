@@ -5,6 +5,7 @@ info:
   contact: 
     name: Antti Kautiainen
     email: antti@kautiainen.com
+    url: https://github.com/Kartagia/arm5-open-api
 components: 
 tags: 
   - name: arm5
