@@ -12,6 +12,29 @@ info:
     url: ./LICENCE
 security: [ {headerApiKey: []} ]
 paths:
+  "/arm5/guid/{id}":
+    get: 
+      operationId: getGuidInfo
+      description: Get guid information.
+      summary: Retrieve a detailed information of a guid.
+      tags: 
+        - guid
+        - get
+      parameters: 
+        - name: id
+          in: path
+          required: true
+          schema: 
+            $ref: "#/components/schemas/GUID"
+      responses: 
+        "200":
+          description: The GUID info retrieved.
+          content: 
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/GuidInfo"
+        default: 
+          $ref: "#/components/responses/DefaultError"
   "/arm5/journaling/guid":
     get:
       operationId: createGuid
@@ -26,12 +49,9 @@ paths:
           content: 
             application/json:
               schema:
-                type: object
-                properties:
-                  guid:
-                    $ref: "#/components/schemas/GUID"
-                  temporary: 
-                    type: boolean
+                $ref: "#/components/schemas/GuidInfo"
+        default:
+          $ref: "#/components/responses/DefaultError"
     delete: 
       operationId: releaseGuid
       description: Releases a temporary GUID and all temporary GUIDs attached to it.
@@ -74,11 +94,7 @@ paths:
               schema: 
                 $ref: "./types.yaml#/components/schemas/Error"                
         default: 
-          description: Error occured.
-          content: 
-            application/json:
-              schema: 
-                $ref: "./types.yaml#/components/schemas/Error"
+          $ref: "#/components/responses/DefaultError"
   "/arm5/types/date/journal/${dateString}":
     get:
       description: Test validity of a journaling date string.
@@ -102,16 +118,28 @@ paths:
               schema:
                 type: boolean
         default: 
-          description: Error occured.
-          content: 
-            application/json:
-              schema: 
-                $ref: "./types.yaml#/components/schemas/Error"
+          $ref: "#/components/responses/DefaultError"
 components: 
+  responses: 
+    DefaultError:
+      description: Error occured.
+      content: 
+        application/json:
+          schema: 
+            $ref: "./types.yaml#/components/schemas/Error"
   schemas: 
     GUID: 
       type: string
       pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$
+    GuidInfo:
+      type: object
+      required: 
+        -  guid
+      properties:
+        guid: 
+          $ref: "#/components/schemas/GUID"
+        temporary: 
+          type: boolean
     JournalDateString: 
       $ref: ./types.dates.yaml#/components/schemas/JournalDateString
   securitySchemes:
