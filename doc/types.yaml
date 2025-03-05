@@ -1,0 +1,28 @@
+components:
+  schemas:
+    GUID: 
+      type: string
+      pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$
+    Error:
+      type: object
+      properties:
+        message: 
+          type: string
+        errorCode: 
+          type: string
+  securitySchemes:
+    http:
+      type: http
+      scheme: basic
+    headerApiKey: 
+      type: apiKey
+      scheme: basic
+      in: header
+      name: x-openapi-token
+      description: The basic authentication uses header API key identification.
+    cookieApiKey: 
+      type: apiKey
+      scheme: basic
+      in: cookie
+      name: x-openapi-token
+      description: The basic authentication uses cookie identification with API key.

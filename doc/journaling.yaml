@@ -1,0 +1,139 @@
+openapi: 3.0.0
+info: 
+  title: Ars Magica Open API Journaling
+  version: 1.0.0
+  description: The journaling API.
+  contact: 
+    name: Antti Kautiainen
+    email: antti@kautiainen.com
+    url: https://github.com/Kartagia/arm5-open-api
+  license: 
+    name: MIT
+    url: ./LICENCE
+security: [ {headerApiKey: []} ]
+paths:
+  "/arm5/journaling/guid":
+    get:
+      operationId: createGuid
+      description: Create a new guid.
+      summary: Get a newly generated GUID unique for the API instance.
+      tags:
+        - get
+        - guid
+      responses: 
+        "200":
+          description: GUID created successfully.
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guid:
+                    $ref: "#/components/schemas/GUID"
+                  temporary: 
+                    type: boolean
+    delete: 
+      operationId: releaseGuid
+      description: Releases a temporary GUID and all temporary GUIDs attached to it.
+      summary: Release an existing temporary GUID. 
+      tags: 
+        - delete
+        - guid
+      security: 
+        - cookieApiKey: []
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              type: object
+              required:
+                - guid
+      responses: 
+        "409":
+          description: The release was not possible due conflicts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: "#/components/schemas/GUID"
+        "200":
+          description: Temporary GUID released along wiht removing other guids.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/GUID"
+        "204":
+          description: Temporary GUID released.
+        "404":
+          description: The GUID is not temporary or does not exist.
+          content:
+            application/json:
+              schema: 
+                $ref: "./types.yaml#/components/schemas/Error"                
+        default: 
+          description: Error occured.
+          content: 
+            application/json:
+              schema: 
+                $ref: "./types.yaml#/components/schemas/Error"
+  "/arm5/types/date/journal/${dateString}":
+    get:
+      description: Test validity of a journaling date string.
+      operationId: validJournalDate
+      summary: Check validity of a journaling date string.
+      tags: 
+        - get
+        - Valid Journal Date String
+      parameters:
+        - name: dateString
+          description: The checked date string.
+          schema: 
+            $ref: "#/components/schemas/JournalDateString"
+          required: true
+          in: path
+      responses:
+        "200": 
+          description: Standard response, as the call should never fail.
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default: 
+          description: Error occured.
+          content: 
+            application/json:
+              schema: 
+                $ref: "./types.yaml#/components/schemas/Error"
+components: 
+  schemas: 
+    GUID: 
+      type: string
+      pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$
+    JournalDateString: 
+      $ref: ./types.dates.yaml#/components/schemas/JournalDateString
+  securitySchemes:
+    http:
+      type: http
+      scheme: basic
+    headerApiKey: 
+      type: apiKey
+      in: header
+      name: x-openapi-token
+      description: The basic authentication uses header API key identification.
+    cookieApiKey: 
+      type: apiKey
+      in: cookie
+      name: x-openapi-token
+      description: The basic authentication uses cookie identification with API key.
+tags: 
+  - name: guid
+    description: Global unique identifier.
+  - name: Valid Journal Date String
+    description: A valid journal date string. 
+  - name: get
+    description: GET HTTP method.
+  - name: delete
+    description: DELETE HTTP method.
