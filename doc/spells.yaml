@@ -267,6 +267,33 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/GameMechanics"
+    SpellRequisite: 
+      allOf: 
+        -  $ref: "#/components/schemas/GameMechanics"
+        - $ref: "#/components/schemas/Modifier"
+        - type: object
+          properties:
+            target: 
+              $ref: "types.yaml#/components/schemas/Tag"
+            art: 
+              oneOf: 
+                - $ref: "#/components/schemas/GUID"
+                - $ref: "#/components/schemas/ArtKey"
+            requisite:
+              type: string
+              pattern: ^(cosmetic|required|optional)$
+            operator:
+              default: "+"
+            value: 
+              default: 0
+      default:
+        name: "Casting Requisite"
+        tag: "requisite.casting"
+        target: "magnitude"
+        operator: "+"
+        value: 0
+        art: "Cr"
+        requiste: required
     GameMechanics:
       $ref: "mechanics.yaml#/components/schemas/GameMechanics"
     Modifier:
