@@ -1,4 +1,11 @@
 components:
+  responses: 
+    DefaultError:
+      description: Error occured.
+      content: 
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/Error"
   schemas:
     GUID: 
       type: string
