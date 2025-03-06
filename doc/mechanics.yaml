@@ -140,7 +140,7 @@ components:
           schema: 
             type: boolean
     DefaultError: 
-      $ref: "journaling.yaml#/components/responses/DefaultError" 
+      $ref: "types.yaml#/components/responses/DefaultError" 
     AllRules:
       description: All game rules.
       content: 
@@ -420,7 +420,7 @@ components:
           - 0
     Operators:
       type: string
-      pattern: ^[-+*(]|(?:[/)](?:\([duze]\))?)$
+      pattern: ^[-+*%(]|(?:[/)](?:\([duze]\))?)$
     RoundingUp:
       type: string
       pattern: ^\(u\)$
