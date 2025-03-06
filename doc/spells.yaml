@@ -171,6 +171,205 @@ components:
     FormKey:
       type: string
       pattern: ^\p[A-Z][a-z]{1,5}$
+    Technique:
+      type: object
+      required: 
+        - name
+        - abbrev
+        - type
+      properties:
+        type: 
+          type: string
+        name: 
+          type: string
+          pattern: ^[A-Z][a-z]+$
+        abbrev:
+          $ref: "#/components/schemas/TechniqueKey"
+        description:
+          type: string 
+    Form:
+      type: object
+      required: 
+        - name
+        - abbrev
+        - type
+      properties:
+        type: 
+          type: string
+        name: 
+          type: string
+          pattern: ^[A-Z][a-z]+$
+        abbrev:
+          $ref: "#/components/schemas/FormKey"
+        description: 
+          type: string
+    Art: 
+      oneOf: 
+        - $ref: "#/components/schemas/Technique"
+        - $ref: "#/components/schemas/Form"
+      discriminator: 
+        propertyName: name
+    Spell:
+      type: object
+      properties:
+        guideline: 
+          $ref: "#/components/schemas/GUID"
+        level: 
+          $ref: "#/components/schemas/level"
+        range: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+        duration: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+        target: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+    SpellInfo:
+      type: object
+      properties: 
+        range: 
+          type: array
+          items:
+            oneOf: 
+              - $ref: "#/components/schemas/RangeRef"
+              - $ref: "#/components/schemas/RangeInfo"
+          minItems: 1
+        duration:
+          type: array
+          items: 
+            oneOf: 
+              - $ref: "#/components/schemas/DurationRef"
+              - $ref: "#/components/schemas/DurationInfo"
+          minItems: 1
+        target:
+          type: array
+          minItems: 1
+          items: 
+            oneOf: 
+              - $ref: "#/components/schemas/TargetRef"
+              - $ref: "#/components/schemas/TargetInfo"
+        guideline:
+          oneOf: 
+            - $ref: "#/components/schemas/SpellGuideline"
+            - $ref: "#/components/schemas/Reference"
+        description:
+          type: string
+        level: 
+          $ref: "#/components/schemas/level"
+        mechanics: 
+          type: array
+          items: 
+            $ref: "#/components/schemas/GameMechanics"
+    GameMechanics:
+      $ref: "mechanics.yaml#/components/schemas/GameMechanics"
+    Modifier:
+      $ref: "mechanics.yaml#/components/schemas/Modifier"
+    RDT:
+      type: object
+      properties:
+        name:
+          type: string
+        modifier:
+          type: integer
+        description: 
+          type: string 
+        secondaryRDTs:
+          type: array
+          items: 
+            $ref: "#/components/schemas/GUID"
+    RDTInfo:
+      type: object
+      properties:
+        name: 
+          type: string
+        modifier: 
+          type: integer
+        description:
+          type: string
+        secondaryRDTs:
+          type: array
+          items: 
+            oneOf: 
+            - $ref: "#/components/schemas/RDTInfo"
+            - $ref: "#/components/schemas/RDT"
+    TargetProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Target$
+          
+    RangeProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Range$
+  
+    Range:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/RangeProps"
+    RangeInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/RangeProps"
+
+    RangeRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/RangeProps"
+    DurationRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/DurationProps"
+    TargetRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/TargetProps"
+
+
+    DurationProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Duration$
+
+    Duration:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/DurationProps"
+    DurationInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/DurationProps"
+      
+
+    Target:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/TargetProps"
+    TargetInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/TargetProps"
     SpellGuideline:
       type: object
       required: 
@@ -197,6 +396,9 @@ components:
         temporary:
           type: boolean
           description: Is the guideline a planned temporary guideline.
+    Reference:
+      $ref: "types.yaml#/components/schemas/Reference"
+        
   parameters:
     id: 
       name: id
@@ -231,4 +433,6 @@ tags:
     description: The operation adds one or more resources.
   - name: Retrieve
     description: The operation retrieves oen or more resources.
+  - name: Art
+    description: The art is either a verb or a noun of a magical system.
 
