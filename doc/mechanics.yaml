@@ -1,0 +1,435 @@
+openapi: 3.0.3
+info: 
+  title: Ars Magica Open API for Spells
+  description: An Open API implementation for Ars Magica spells and strctures necessary for spells.
+  version: 1.0.0
+  contact: 
+    name: "Antti Kautiainen"
+    email: "antti@kautiainen.com"
+    url: "https://github.com/Kartagia/arm5-open-api"
+  license:
+    name: MIT
+security: 
+  -  headerApiKey: []
+paths:
+  "/rules":
+    get: 
+      operationId: getAllRules
+      summary: Retrieve all game rules
+      description: "
+        Retrieve all game rules from the server.
+        "
+      responses:
+        "200": 
+          $ref: "#/components/responses/AllRules" 
+        default: 
+          $ref: "#/components/responses/DefaultError"
+  "/rules/test":
+    post: 
+      operationId: testPredicate
+      summary: Performs a test on a predicate.
+      description: "
+        Performs the check with supplied predicate.
+
+        The result of the predicate is returned.
+        "
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              type: object
+              properties:
+                formula: 
+                  $ref: "#/components/schemas/Formula" 
+                target: 
+                  $ref: "#/components/schemas/AnyJson"
+      responses: 
+        "200": 
+          $ref: "#/components/responses/BooleanResult"
+        "401":
+          $ref: "#/components/responses/UnauthorizedOperation"
+        "400": 
+          $ref: "#/components/responses/InvalidOperation"
+        default: 
+          $ref: "#/components/responses/DefaultError"
+
+  "/rules/test/{id}":
+    post:
+      operationId: testPredicateById
+      summary: Performs a predicate.
+      description: "
+        Performs the check on the predicate.
+        "
+      parameters: 
+        - name: "id"
+          description: The GUID of the predicate.
+          in: path
+          schema: 
+            $ref: "#/components/schemas/GUID"
+          required: true
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              type: object
+              properties: 
+                target: 
+                  type: object
+      responses: 
+        "200": 
+          $ref: "#/components/responses/BooleanResult"
+        default: 
+          $ref: "#/components/responses/DefaultError"
+            
+                
+        
+      
+servers: 
+  - url: "http://localhost/arm5/v1"
+components:
+  responses: 
+    ForbiddenOperation:
+      description: The insufficient caller priviledged.
+      content: 
+        application/json:
+          schema: 
+            allOf:
+            - $ref: "types.yaml#/components/schemas/Error"
+            - type: object
+              properties: 
+                statusCode: 
+                  type: integer
+                  default: 403
+              default: 
+                message: "The user cannot do this."
+                statusCode: 403
+    UnauthorizedOperation:
+      description: The caller authentication required.
+      content: 
+        application/json:
+          schema: 
+            allOf:
+            - $ref: "types.yaml#/components/schemas/Error"
+            - type: object
+              properties: 
+                statusCode: 
+                  type: integer
+                  default: 401
+              default: 
+                message: "The user authentication required"
+                statusCode: 401
+    InvalidOperation:
+      description: The operation failed due invalid parameters.
+      content: 
+        application/json:
+          schema: 
+            allOf:
+            - $ref: "types.yaml#/components/schemas/Error"
+            - type: object
+              properties: 
+                statusCode: 
+                  type: integer
+                  default: 400
+              default: 
+                message: "The given operation could not be performed due invalid content"
+                statusCode: 400
+    BooleanResult:
+      description: A boolean value result.
+      content:
+        application/json:
+          schema: 
+            type: boolean
+    DefaultError: 
+      $ref: "journaling.yaml#/components/responses/DefaultError" 
+    AllRules:
+      description: All game rules.
+      content: 
+        application/json:
+          schema: 
+            type: array
+            items: 
+              type: object
+              properties: 
+                guid: 
+                  $ref: "#/components/schemas/GUID"
+                rule:
+                  $ref: "#/components/schemas/GameMechanics"
+  securitySchemes: 
+    $ref: "types.yaml#/components/securitySchemes"
+  schemas:
+    AnyJson:
+      oneOf: 
+        - $ref: "#/components/schemas/Scalar"
+        - type: boolean
+        - type: object
+        - type: array
+          items:
+            $ref: "#/components/schemas/AnyJson"
+    GUID: 
+      $ref: "types.yaml#/components/schemas/GUID"
+    Name:
+      $ref: "types.yaml#/components/schemas/Name"
+    GameMechanics:
+      type: object
+      required:
+        - target
+      properties:
+        name: 
+          $ref: "#/components/schemas/Name"
+        tag: 
+          $ref: "#/components/schemas/Tag"
+        target: 
+          $ref: "#/components/schemas/RuleTarget"
+    
+    Tag:
+      type: string
+      pattern: ^[a-z]\w*(?:\.[a-z]\w+)*$
+      description: A tag used to reference any entity.
+    Modifier:
+      allOf:
+        - $ref: "#/components/schemas/GameMechanics"
+        - type: object
+          required:
+            - operator
+            - value
+          properties:
+            operator: 
+              $ref: "#/components/schemas/Operators"
+            value: 
+              $ref: "#/components/schemas/Scalar"
+    Integer:
+      type: integer
+    Number:
+      type: number
+    String:
+      type: string 
+      pattern: ^\"([^\"\\]+|\\\"|\\\\)*\"$
+    Numeric: 
+      oneOf:
+        - $ref: "#/components/schemas/Integer"
+        - $ref: "#/components/schemas/Number"
+    Scalar:
+      oneOf:
+        - $ref: "#/components/schemas/Numeric"
+        - $ref: "#/components/schemas/String"
+    Formula:
+      allOf:
+        - $ref: "#/components/schemas/GameMechanics"
+        - type: object
+          required:
+            - name
+            - formula 
+          properties:
+            name: 
+              type: string
+              description: The name of the formula.
+            result:
+              type: string
+              description: The type of the result value. Defaults to integer.
+            formula: 
+              type: array
+              items:
+                oneOf: 
+                - $ref: "#/components/schemas/Formula"
+                - $ref: "#/components/schemas/RuleTarget"
+                - $ref: "#/components/schemas/Operators"
+                - $ref: "#/components/schemas/Scalar"
+    Choice:
+      allOf: 
+        - $ref: "#/components/schemas/GameMechanics"
+        - type: object
+          properties: 
+            count: 
+              type: integer
+              minimum: 1
+              default: 1
+            choices:
+              type: array
+              minItems: 2
+              items: 
+                $ref: "#/components/schemas/GameMechanics"
+    
+    Comparison:
+      type: string
+      pattern: ^(?:==|<|>|<=|>=|<>|!=|le|lt|gt|ge|eq|ne)$
+    Predicate:
+      type: object
+      properties: 
+        formula:
+          type: array
+          items:
+            anyOf: 
+              - $ref: "#/components/schemas/Formula"
+              - $ref: "#/components/schemas/Operators"
+              - $ref: "#/components/schemas/RuleTarget"
+              - $ref: "#/components/schemas/Comparison"
+              - $ref: "#/components/schemas/Scalar"
+    ModifierChoice:
+      allOf: 
+        - $ref: "#/components/schemas/Choice"
+        - type: object
+          properties:
+            choices:
+              type: array
+              minItems: 2
+              items:
+                $ref: "#/components/schemas/Modifier"
+    Roll:
+      type: object
+      properties: 
+        count: 
+          type: integer
+          minimum: 1
+          default: 1
+        maximimum:
+          type: integer
+          minimum: 1
+          default: 10
+        minimum:
+          type: integer
+          minimum: 0
+          default: 1
+      default: 
+        name: Simple Die
+        tag: simpledie
+        count: 1
+        minimum: 1
+        maximum: 10
+    BotchCheck:
+      allOf: 
+        - $ref: "#/components/schemas/GameMechanics"
+        - type: object
+          properties:
+            risk: 
+              type: integer 
+              description: "The risk of the check.
+              
+                The number of botch dice rolled to determine whether
+                the roll botches or not.
+                "
+    QualityDie:
+      allOf: 
+        - $ref: "#/components/schemas/Roll"
+        - type: object
+          properties:
+            expands:
+              type: array
+              items: 
+                $ref: "#/components/schemas/RollExpansion"
+      default: 
+        name: Quality Die
+        tag: qualitydie
+        minimum: 1
+        maximum: 10
+        expands:
+          trigger:
+            target: "result"
+            formula:
+              - ==
+              - 1
+          result:
+            formula:
+              - 2
+              - "*" 
+              - $ref: "#/components/schemas/QualityDie/default"
+    StressRoll:
+      allOf: 
+        -  $ref: "#/components/schemas/StressDie"
+        - type: object
+          properties:
+            minRisk:
+              type: integer
+              default: 1
+              description: The minimal risk of the check.
+            maxRisk:
+              type: integer
+              description: The maximal risk of the check.
+            risk:
+              description: The current risk, or the formula to calculate the risk
+              oneOf: 
+                - $ref: "#/components/schemas/Formula"
+                - $ref: "#/components/schemas/Integer"
+              default: 
+                1
+      default: 
+        risk: 1
+    StressDie:
+      allOf: 
+        - $ref: "#/components/schemas/Roll"
+        - type: object
+          properties:
+            minimum: 
+              type: integer
+              minimum: 0
+              maximum: 0
+              default: 0
+            maximum:
+              type: integer
+              maximum: 9
+              minimum: 9
+            expands:
+              type: array
+              items: 
+                $ref: "#/components/schemas/RollExpansion"
+              default: 
+                - trigger:
+                    $ref: "#/components/schemas/ExplosionTrigger"
+                  result: 
+                    $ref: "#/components/schemas/Roll/default"
+                - trigger:
+                    $ref: "#/components/schemas/BotchTrigger"
+                  result:
+                    $ref: "#/components/schemas/BotchCheck"
+      default: 
+        name: Stress Die
+        tag: stressdie
+        botchDice: 1
+        minimum: 0
+        maximum: 9
+        expands:
+          - trigger:
+              $ref: "#/components/schemas/ExplosionTrigger/default"
+            result:
+              $ref: "#/components/schemas/Roll/default"
+    RollExpansion:
+      type: object
+      properties: 
+        trigger:
+          $ref: "#/components/schemas/Predicate"
+        result:
+          oneOf:
+          - $ref: "#/components/schemas/Roll"
+          - $ref: "#/components/schemas/Integer"
+    ExplosionTrigger:
+      allOf: 
+        - $ref: "#/components/schemas/GameMechanics"
+      default:
+        target: "result"
+        name: "Explosion"
+        formula: 
+          - ==
+          - 1
+    BotchTrigger:
+      allOf: 
+        - $ref: "#/components/schemas/GameMechanics"
+      default:
+        target: "result"
+        name: "BotchCheck"
+        formula: 
+          - ==
+          - 0
+    Operators:
+      type: string
+      pattern: ^[-+*(]|(?:[/)](?:\([duze]\))?)$
+    RoundingUp:
+      type: string
+      pattern: ^\(u\)$
+    RoundingDown:
+      type: string
+      pattern: ^\(d\)$
+    RoundingZero:
+      type: string
+      pattern: ^\(z\)$  
+    RuleTarget: 
+      $ref: "#/components/schemas/Tag"
+ 

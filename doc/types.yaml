@@ -1,0 +1,71 @@
+components:
+  schemas:
+    GUID: 
+      type: string
+      pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$
+    Error:
+      type: object
+      properties:
+        message: 
+          type: string
+        errorCode: 
+          type: string
+    Name:
+      type: string
+      pattern: ^[A-Z][a-z]*(?:[\s-][A-Z](?:[a-z]*|\.)|-[a-z]+)*$
+      description: "A valid name. Due limitations of the string pattern, only ASCII letters are allowed.
+        
+        The name may have several segments separated with either a single dash (-) or a space.
+        
+        Each segment starts with upper case letter followed by: 
+          - a period (.)
+          - lower case letters
+          - dash (-) followed by lower case letters
+        "
+    Reference:
+      type: object
+      required:
+        - guid
+        - currentDate
+      properties:
+        guid: 
+          $ref: "#/components/schemas/GUID"
+        type: 
+          type: string
+        currentDate: 
+          $ref: "types.dates.yaml#/components/schemas/JournalDateString"    
+    Tag:
+      type: string
+      pattern: ^[a-z]\w*(?:\.[a-z]\w+)*$
+      description: A tag used to reference any entity.
+    Integer:
+      type: integer
+    Number:
+      type: number
+    String:
+      type: string 
+      pattern: ^\"([^\"\\]+|\\\"|\\\\)*\"$
+    Numeric: 
+      oneOf:
+        - $ref: "#/components/schemas/Integer"
+        - $ref: "#/components/schemas/Number"
+    Scalar:
+      oneOf:
+        - $ref: "#/components/schemas/Numeric"
+        - $ref: "#/components/schemas/String"
+  securitySchemes:
+    http:
+      type: http
+      scheme: basic
+    headerApiKey: 
+      type: apiKey
+      scheme: basic
+      in: header
+      name: x-openapi-token
+      description: The basic authentication uses header API key identification.
+    cookieApiKey: 
+      type: apiKey
+      scheme: basic
+      in: cookie
+      name: x-openapi-token
+      description: The basic authentication uses cookie identification with API key.
