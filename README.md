@@ -50,3 +50,33 @@ virtual environment for installation of the packages.
 - The user may move the result into any directory.
 - The user must then follow Kiota suggestions for additional downloaded libraries
   after activating the environment with pip.
+
+## API design guidelines
+
+API design has Saga as cornerstone of data storage and journaling the data on in-game
+date. 
+
+### Entity
+An entity is an object stored in the API. It contains properties, and allows creation
+of a snapshotp of data on it. 
+- Properties may be links to other entities creating dependency between owner and linked.
+- Non-entity properties are identified by the GUID of the ownning entity.
+- The properties are separated into a safely changeable fluff properties, and guarded properties.
+  - Guarded properties with links are guarded against changes of the past altering future of
+    other entities.
+  - Guarded properties without links can be safely altered like unguarded properties.
+  - Forced changes on linked guarded properties creates a new copy of the entity with a new GUID.
+- Creating a copy of an entity creates a new branch linking the state copypied to the new entity.
+  - Enties with copies thus are always Guarded with links. 
+
+### GUID - Global Uniqued Identifiers
+The API uses UUIDv4 for GUIDs of all stored entities.
+
+### The difference between plan and past
+All entities support planning, and planning does not create links nor prohibit changes on present or
+past. Plan can be executed creating entity changes according to the planned change. 
+- An executed plan becomes part of the past.
+- Invalidated plan entities are just removed. 
+
+### The base storage of all data is Saga
+The saga is the base storage of all data. 
