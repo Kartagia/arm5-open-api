@@ -9,6 +9,10 @@ info:
     url: "https://github.com/Kartagia/arm5-open-api"
   license:
     name: MIT
+    url: "../LICENSE"
+servers:
+  - description: Local implementation of the server for private API use.
+    url: http://localhost/arm5/v1 
 security: 
   -  headerApiKey: []
 paths: 
@@ -37,6 +41,10 @@ paths:
       responses: 
         "200": 
           $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidSpellGuideline"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
         default:
           $ref: journaling.yaml#/components/responses/DefaultError
   "/arm5/spellguidelines/{id}":
@@ -71,6 +79,8 @@ paths:
       responses: 
         "200": 
           $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidSpellGuideline"
         "409":
           $ref: "#/components/responses/ConflictingUpdate"
         default:
@@ -106,6 +116,31 @@ components:
         text/plain:
           schema: 
             $ref: "#/components/schemas/GUID"
+    "InvalidSpellGuideline":
+      description: The spell guideline was invalid.
+      content: 
+        applciation/json:
+          schema: 
+            type: object
+            required: 
+              -  invalidProperties
+            properties: 
+              invalidProperties:
+                type: array
+                items: 
+                  type: object
+                  required: 
+                    - propertyName
+                  properties:
+                    propertyName: 
+                      description: The invalid property name.
+                      type: string
+                    message:
+                      type: string
+                      description: The error message.
+                    error:
+                      $ref: "#/components/schemas/Error"
+                    
     "ConflictingUpdate":
       description: The update causes a conflict.
       content:
@@ -353,7 +388,14 @@ components:
       allOf:
         - $ref: "#/components/schemas/RDTInfo"
         - $ref: "#/components/schemas/RangeProps"
-
+      default:
+        name: Personal
+        modifier: 0
+        description: "Affects only the caster and everything withing their possession.
+          
+          The personal range bypasses Magic Resistance.
+          "
+        type: Range
     RangeRef:
       allOf: 
         - $ref: "#/components/schemas/Reference"
@@ -397,6 +439,28 @@ components:
       allOf:
         - $ref: "#/components/schemas/RDTInfo"
         - $ref: "#/components/schemas/TargetProps"
+    ArtReference:
+      oneOf: 
+        -  $ref: "#/components/schemas/TechniqueReference"
+        -  $ref: "#/components/schemas/FormReference"
+    TechniqueReference:
+      allOf: 
+        -  $ref: "#/components/schemas/Reference"
+        -  type: object
+           properties: 
+            type:
+              type: string
+              pattern: ^art.technique$
+              default: art.technique
+    FormReference:
+      allOf: 
+        -  $ref: "#/components/schemas/Reference"
+        -  type: object
+           properties: 
+            type:
+              type: string
+              pattern: ^art.form$
+              default: art.form
     SpellGuideline:
       type: object
       required: 
@@ -409,16 +473,23 @@ components:
           $ref: "#/components/schemas/level"
         title:
           type: string
+          description: "An unique title among guidelines. The title also forms the first sentence of the guideline text.
+          
+            If the title does not end with comma, a comma should be added when creating the guideline text."
         technique:
           oneOf: 
+            - $ref: "#/components/schemas/TechniqueReference"
             - $ref: "#/components/schemas/GUID"
             - $ref: "#/components/schemas/TechniqueKey"
-          description: "A reference to the form of the guideline"
+          description: "A reference to the technique of the guideline"
         form:
           oneOf: 
+            - $ref: "#/components/schemas/FormReference"
             - $ref: "#/components/schemas/GUID"
             - $ref: "#/components/schemas/FormKey"
-          description: "A reference to the technique of the guideline"
+          description: "A reference to the form of the guideline"
+        description:
+          description: The descpription of the guideline added to the title.
           type: string
         temporary:
           type: boolean
