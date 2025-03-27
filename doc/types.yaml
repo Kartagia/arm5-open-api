@@ -33,7 +33,6 @@ components:
       type: object
       required:
         - guid
-        - currentDate
       properties:
         guid: 
           $ref: "#/components/schemas/GUID"
