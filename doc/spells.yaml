@@ -12,7 +12,7 @@ info:
     url: "../LICENSE"
 servers:
   - description: Local implementation of the server for private API use.
-    url: http://localhost/arm5/v1 
+    url: http://localhost/arm5
 security: 
   -  headerApiKey: []
 paths: 
@@ -246,11 +246,24 @@ components:
         propertyName: name
     Spell:
       type: object
+      required: 
+        -  name
+        -  level
+        -  form
+        -  technique
       properties:
         guideline: 
           $ref: "#/components/schemas/GUID"
         level: 
           $ref: "#/components/schemas/level"
+        form:
+          oneOf: 
+          - $ref: "#/components/schemas/FormKey"
+          - $ref: "#/components/schemas/FormReference"
+        technique:
+          oneOf: 
+          - $ref: "#/components/schemas/TechniqueKey"
+          - $ref: "#/components/schemas/TechniqueReference"
         range: 
           type: array
           items:
