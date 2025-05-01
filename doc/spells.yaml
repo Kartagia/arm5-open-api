@@ -1,0 +1,536 @@
+openapi: 3.0.3
+info: 
+  title: Ars Magica Open API for Spells
+  description: An Open API implementation for Ars Magica spells and strctures necessary for spells.
+  version: 1.0.0
+  contact: 
+    name: "Antti Kautiainen"
+    email: "antti@kautiainen.com"
+    url: "https://github.com/Kartagia/arm5-open-api"
+  license:
+    name: MIT
+    url: "../LICENSE"
+servers:
+  - description: Local implementation of the server for private API use.
+    url: http://localhost/arm5/v1 
+security: 
+  -  headerApiKey: []
+paths: 
+  "/arm5/spellguidelines":
+    post: 
+      description: "Adds a new spell guideline.
+
+        If there is a spell guideline with same title, the creation
+        fails, as title is unique property of a spell guideline.
+
+        The GUID associated to the added spell guideline is returned to caller.
+        "
+      operationId: createSpellGuideline
+      summary: Add a new spell guideline.
+      security: 
+        -  cookieApiKey: []
+      tags: 
+        - post
+        - Add
+        - Spell Guideline
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/SpellGuideline"
+      responses: 
+        "200": 
+          $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidSpellGuideline"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+  "/arm5/spellguidelines/{id}":
+    put: 
+      description: "Updates an existing guideline.
+
+        If there is nospell guideline with the GUID, a not found
+        error is returned. 
+        
+        If the spell guideline is referred by an occured event, the 
+        operation causes a conflict on change of any detail causing
+        temporal inconsitency.
+
+        The GUID associated to the updated spell guideline is returned to caller.
+        (The return type is selected to keep both forced update and update on the same page.)
+        "
+      operationId: updateSpellGuideline
+      summary: Add a new spell guideline.
+      security: 
+        -  cookieApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/id"
+      tags: 
+        - post
+        - Add
+        - Spell Guideline
+      requestBody: 
+        content: 
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/SpellGuideline"
+      responses: 
+        "200": 
+          $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidSpellGuideline"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+        
+    get: 
+      description: Retrieve a spell guideline associated with given identifier.
+      summary: Retrieves single spell guideline with an identifier.
+      operationId: getSpellGuidelineById
+      parameters: 
+        - $ref: "#/components/parameters/id"
+      security: 
+        -  http: []
+      tags:
+        - get
+        - Retrieve
+        - Spell Guideline
+      responses:
+        "200": 
+          $ref: "#/components/responses/SpellGuidelineResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+components:
+  responses: 
+    "CreatedGuid":
+      description: The GUID of the successfully created resource.
+      content: 
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+        text/plain:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+    "InvalidSpellGuideline":
+      description: The spell guideline was invalid.
+      content: 
+        applciation/json:
+          schema: 
+            type: object
+            required: 
+              -  invalidProperties
+            properties: 
+              invalidProperties:
+                type: array
+                items: 
+                  type: object
+                  required: 
+                    - propertyName
+                  properties:
+                    propertyName: 
+                      description: The invalid property name.
+                      type: string
+                    message:
+                      type: string
+                      description: The error message.
+                    error:
+                      $ref: "#/components/schemas/Error"
+                    
+    "ConflictingUpdate":
+      description: The update causes a conflict.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: 
+              -  guids
+            properties:
+              guids: 
+                description: The problem causing GUIDS.
+                type: array
+                items: 
+                  $ref: "#/components/schemas/GUID"
+              strict:
+                description: "Is the conflict strict. 
+                
+                  A strict conflict must be handled with forced update
+                  creating new copies of conflicting entities."
+                type: boolean
+        text/plain:
+          schema:
+            type: string
+        text/html:
+          schema: 
+            type: string
+    "SpellGuidelineResponse":
+      description: The retrieved Spell Guideline.
+      content:
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/SpellGuideline"
+    "NotFoundResponse":
+      description: The resource was not found.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                required: 
+                  -  guid
+                properties: 
+                  guid: 
+                    $ref: "#/components/schemas/GUID"
+              - $ref: "#/components/schemas/Error"
+  schemas: 
+    GUID:
+      $ref: "./types.yaml#/components/schemas/GUID"
+    Error:
+      $ref: "./types.yaml#/components/schemas/Error"
+    level:
+      oneOf: 
+        - type: integer
+        - type: string
+          pattern: ^Generic$
+    ArtKey:
+      oneOf: 
+        - $ref: "#/components/schemas/FormKey"
+        - $ref: "#/components/schemas/TechniqueKey"
+    TechniqueKey:
+      type: string
+      pattern: ^[A-Z][a-z]{1,5}$
+    FormKey:
+      type: string
+      pattern: ^\p[A-Z][a-z]{1,5}$
+    Technique:
+      type: object
+      required: 
+        - name
+        - abbrev
+        - type
+      properties:
+        type: 
+          type: string
+        name: 
+          type: string
+          pattern: ^[A-Z][a-z]+$
+        abbrev:
+          $ref: "#/components/schemas/TechniqueKey"
+        description:
+          type: string 
+    Form:
+      type: object
+      required: 
+        - name
+        - abbrev
+        - type
+      properties:
+        type: 
+          type: string
+        name: 
+          type: string
+          pattern: ^[A-Z][a-z]+$
+        abbrev:
+          $ref: "#/components/schemas/FormKey"
+        description: 
+          type: string
+    Art: 
+      oneOf: 
+        - $ref: "#/components/schemas/Technique"
+        - $ref: "#/components/schemas/Form"
+      discriminator: 
+        propertyName: name
+    Spell:
+      type: object
+      properties:
+        guideline: 
+          $ref: "#/components/schemas/GUID"
+        level: 
+          $ref: "#/components/schemas/level"
+        range: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+        duration: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+        target: 
+          type: array
+          items:
+            $ref: "#/components/schemas/GUID"
+          minItems: 1
+    SpellInfo:
+      type: object
+      properties: 
+        range: 
+          type: array
+          items:
+            oneOf: 
+              - $ref: "#/components/schemas/RangeRef"
+              - $ref: "#/components/schemas/RangeInfo"
+          minItems: 1
+        duration:
+          type: array
+          items: 
+            oneOf: 
+              - $ref: "#/components/schemas/DurationRef"
+              - $ref: "#/components/schemas/DurationInfo"
+          minItems: 1
+        target:
+          type: array
+          minItems: 1
+          items: 
+            oneOf: 
+              - $ref: "#/components/schemas/TargetRef"
+              - $ref: "#/components/schemas/TargetInfo"
+        guideline:
+          oneOf: 
+            - $ref: "#/components/schemas/SpellGuideline"
+            - $ref: "#/components/schemas/Reference"
+        description:
+          type: string
+        level: 
+          $ref: "#/components/schemas/level"
+        mechanics: 
+          type: array
+          items: 
+            $ref: "#/components/schemas/GameMechanics"
+    SpellRequisite: 
+      allOf: 
+        -  $ref: "#/components/schemas/GameMechanics"
+        - $ref: "#/components/schemas/Modifier"
+        - type: object
+          properties:
+            target: 
+              $ref: "types.yaml#/components/schemas/Tag"
+            art: 
+              oneOf: 
+                - $ref: "#/components/schemas/GUID"
+                - $ref: "#/components/schemas/ArtKey"
+            requisite:
+              type: string
+              pattern: ^(cosmetic|required|optional)$
+            operator:
+              default: "+"
+            value: 
+              default: 0
+      default:
+        name: "Casting Requisite"
+        tag: "requisite.casting"
+        target: "magnitude"
+        operator: "+"
+        value: 0
+        art: "Cr"
+        requiste: required
+    GameMechanics:
+      $ref: "mechanics.yaml#/components/schemas/GameMechanics"
+    Modifier:
+      $ref: "mechanics.yaml#/components/schemas/Modifier"
+    RDT:
+      type: object
+      properties:
+        name:
+          type: string
+        modifier:
+          type: integer
+        description: 
+          type: string 
+        secondaryRDTs:
+          type: array
+          items: 
+            $ref: "#/components/schemas/GUID"
+    RDTInfo:
+      type: object
+      properties:
+        name: 
+          type: string
+        modifier: 
+          type: integer
+        description:
+          type: string
+        secondaryRDTs:
+          type: array
+          items: 
+            oneOf: 
+            - $ref: "#/components/schemas/RDTInfo"
+            - $ref: "#/components/schemas/RDT"
+    TargetProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Target$
+          
+    RangeProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Range$
+  
+    Range:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/RangeProps"
+    RangeInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/RangeProps"
+      default:
+        name: Personal
+        modifier: 0
+        description: "Affects only the caster and everything withing their possession.
+          
+          The personal range bypasses Magic Resistance.
+          "
+        type: Range
+    RangeRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/RangeProps"
+    DurationRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/DurationProps"
+    TargetRef:
+      allOf: 
+        - $ref: "#/components/schemas/Reference"
+        - $ref: "#/components/schemas/TargetProps"
+
+
+    DurationProps:
+      type: object
+      required: 
+        -  type
+      properties: 
+        type:
+          type: string
+          pattern: ^Duration$
+
+    Duration:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/DurationProps"
+    DurationInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/DurationProps"
+      
+
+    Target:
+      allOf:
+        - $ref: "#/components/schemas/RDT"
+        - $ref: "#/components/schemas/TargetProps"
+    TargetInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/RDTInfo"
+        - $ref: "#/components/schemas/TargetProps"
+    ArtReference:
+      oneOf: 
+        -  $ref: "#/components/schemas/TechniqueReference"
+        -  $ref: "#/components/schemas/FormReference"
+    TechniqueReference:
+      allOf: 
+        -  $ref: "#/components/schemas/Reference"
+        -  type: object
+           properties: 
+            type:
+              type: string
+              pattern: ^art.technique$
+              default: art.technique
+    FormReference:
+      allOf: 
+        -  $ref: "#/components/schemas/Reference"
+        -  type: object
+           properties: 
+            type:
+              type: string
+              pattern: ^art.form$
+              default: art.form
+    SpellGuideline:
+      type: object
+      required: 
+        - title
+        - level
+        - technique
+        - form
+      properties:
+        level:
+          $ref: "#/components/schemas/level"
+        title:
+          type: string
+          description: "An unique title among guidelines. The title also forms the first sentence of the guideline text.
+          
+            If the title does not end with comma, a comma should be added when creating the guideline text."
+        technique:
+          oneOf: 
+            - $ref: "#/components/schemas/TechniqueReference"
+            - $ref: "#/components/schemas/GUID"
+            - $ref: "#/components/schemas/TechniqueKey"
+          description: "A reference to the technique of the guideline"
+        form:
+          oneOf: 
+            - $ref: "#/components/schemas/FormReference"
+            - $ref: "#/components/schemas/GUID"
+            - $ref: "#/components/schemas/FormKey"
+          description: "A reference to the form of the guideline"
+        description:
+          description: The descpription of the guideline added to the title.
+          type: string
+        temporary:
+          type: boolean
+          description: Is the guideline a planned temporary guideline.
+    Reference:
+      $ref: "types.yaml#/components/schemas/Reference"
+        
+  parameters:
+    id: 
+      name: id
+      description: A GUID idenfifier of an entity.
+      in: path
+      required: true
+      schema: 
+        $ref: "#/components/schemas/GUID"
+  securitySchemes: 
+    cookieApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/cookieApiKey"
+    headerApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/headerApiKey"
+    http:
+      $ref: "journaling.yaml#/components/securitySchemes/http"
+tags:
+  - name: guid
+    description: Global unique identifier.
+  - name: Valid Journal Date String
+    description: A valid journal date string. 
+  - name: get
+    description: GET HTTP method.
+  - name: delete
+    description: DELETE HTTP method.
+  - name: post
+    description: POST HTTP method.
+  - name: put
+    description: PUT HTTP method.
+  - name: Spell Guideline
+    description: The operation affects one or more spell guidelines.
+  - name: Add
+    description: The operation adds one or more resources.
+  - name: Retrieve
+    description: The operation retrieves oen or more resources.
+  - name: Art
+    description: The art is either a verb or a noun of a magical system.
+
