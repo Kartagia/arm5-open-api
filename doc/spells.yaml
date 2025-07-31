@@ -16,6 +16,69 @@ servers:
 security: 
   -  headerApiKey: []
 paths: 
+  "/arm5/spells/[id]":
+    get: 
+      operationId: getOneSpell
+      summary: Get a spell with identifier.
+      description: "Get a single spell with identifier.
+        
+        If spell is not found, the user is informed with a message
+        containing the invalid request identifier.
+        " 
+      responses: 
+        "200":
+          $ref: "#/components/responses/OneSpell"
+        "404": 
+          $ref: "#/components/responses/NotFoundResponse"
+      
+  "/arm5/spells":
+    get:
+      summary: "Get all spells"
+      description: "Get all spells"
+      operationId: getAllSpells
+      security: 
+        -  headerApiKey: []
+      tags: 
+        - get
+        - Spell
+        - Get
+        - All
+      responses: 
+        "200":
+          $ref:  "#/components/responses/ManySpells"
+        "406":
+          $ref: journaling.yaml#/components/responses/DefaultError  
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+    post: 
+      summary: Add a new spell.
+      operationId: addNewSpell
+      description: "Add a new spell to the repository.
+
+        If the new spell is invalid, the invalid fields are returned with
+        error details. 
+
+        The successful insertion returns teh GUID assigned to the spell.
+        "
+      security: 
+        -  cookieApiKey: []
+      tags: 
+        - post
+        - Spell
+        - Add
+      responses: 
+        "200":
+          $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidSpell"
+        "406":
+          $ref: journaling.yaml#/components/responses/DefaultError
+        default: 
+          $ref: journaling.yaml#/components/responses/DefaultError
+          
+          
+      
+
   "/arm5/spellguidelines":
     post: 
       description: "Adds a new spell guideline.
@@ -107,6 +170,20 @@ paths:
           $ref: "journaling.yaml#/components/responses/DefaultError"
 components:
   responses: 
+    "OneSpell":
+      description: One spells.
+      content: 
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/Spell"
+    "ManySpells":
+      description: One or more spells.
+      content: 
+        application/json:
+          schema: 
+            type: array
+            items: 
+              - $ref: "#/components/schemas/Spell"
     "CreatedGuid":
       description: The GUID of the successfully created resource.
       content: 
@@ -116,6 +193,32 @@ components:
         text/plain:
           schema: 
             $ref: "#/components/schemas/GUID"
+    "InvalidSpell":
+      description: The spell was invalid.
+      content: 
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/Error"
+              - type: object
+                required: 
+                  -  invalidProperties
+                properties:
+                  invalidProperties:
+                    type: array
+                    items: 
+                      type: object
+                      required: 
+                        - propertyName
+                      properties:
+                        propertyName: 
+                          description: The invalid property name.
+                          type: string
+                        message:
+                          type: string
+                          description: The error message.
+                        error:
+                          $ref: "#/components/schemas/Error"
     "InvalidSpellGuideline":
       description: The spell guideline was invalid.
       content: 
