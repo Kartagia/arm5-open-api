@@ -1,0 +1,529 @@
+openapi: 3.0.3
+info: 
+  title: Ars Magica Open API for Spells
+  description: An Open API implementation for Ars Magica spells and strctures necessary for spells.
+  version: 1.0.0
+  contact: 
+    name: "Antti Kautiainen"
+    email: "antti@kautiainen.com"
+    url: "https://github.com/Kartagia/arm5-open-api"
+  license:
+    name: MIT
+    url: "../LICENSE"
+servers:
+  - description: Local implementation of the server for private API use.
+    url: http://localhost/arm5/v1 
+security: 
+  -  headerApiKey: []
+paths:
+  "/arm5/saga/{sagaId}/covenant":
+    post:
+      operationId: createCovenantOfSaga
+      description: "Add a new covenant into a saga. The operation returns the GUID assigned for the covenant."
+      summary: Create a new covenant for a saga.
+      parameters:
+        - in: path
+          name: sagaId
+          schema:
+            $ref: "#/components/parameters/id"
+          required: true
+      security:
+        - cookieApiKey: []
+      tags:
+        - post
+        - Covenant
+        - Add
+        - one
+        - Saga
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Covenant"
+      responses:
+        "201": 
+          $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidCovenant"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+    get:
+      operationId: getAllCovenantsOfSaga
+      description: "Get all covenants of a saga."
+      summary: Get list of all covenant saga-id pairs. 
+      parameters:
+        - in: path
+          name: sagaId
+          schema:
+            $ref: "#/components/parameters/id"
+          required: true
+      security:
+        - http: []
+      tags:
+        - get
+        - all
+        - Saga
+        - Covenant
+        - Retrieve
+      responses:
+        "200":
+          $ref: "#/components/responses/CovenantListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+
+  "/arm5/saga/{sagaId}/covenant/{covenantId}":
+    get: 
+      operationId: getCovenantOfSaga
+      description: "Get a covenant of a saga."
+      summary: Get a covenant of a saga.
+      parameters:
+        - in: path
+          name: sagaId
+          schema:
+            $ref: "#/components/parameters/id"
+          required: true
+        - in: path 
+          name: covenantId
+          schema:
+            $ref: "#/components/parameters/id"
+          required: true
+      security:
+        - http: []
+      tags:
+        - get
+        - one
+        - Saga
+        - Covenant
+        - Retrieve
+      responses:
+        "200":
+          $ref: "#/components/responses/CovenantResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+
+  "/arm5/covenant":
+    post:
+      operationId: createCovenant
+      description: "Add a new covenant into shared covenants. The operation returns the GUID assigned for the covenant."
+      summary: Create a new covenant available for all sagas.
+      security:
+        - cookieApiKey: []
+      tags:
+        - post
+        - Covenant
+        - Add
+        - one
+        - Saga
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Covenant"
+      responses:
+        "201": 
+          $ref: "#/components/responses/CreatedGuid"
+        "400":
+          $ref: "#/components/responses/InvalidCovenant"
+        "409":
+          $ref: "#/components/responses/ConflictingUpdate"
+        default:
+          $ref: journaling.yaml#/components/responses/DefaultError
+    get:
+      operationId: getAllCovenants
+      description: "Get all covenants."
+      summary: Get list of all covenant-id pairs. 
+      security:
+        - http: []
+      tags:
+        - get
+        - all
+        - Covenant
+        - Retrieve
+      responses:
+        "200":
+          $ref: "#/components/responses/CovenantListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+
+  "/arm5/covenants/{id}":
+    get:
+      description: "Gets a covenant with an identifier."
+      operationId: getCovenant
+      summary: Get a covenant with id.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      security:
+        - cookieApiKey: []
+      tags:
+        - get
+        - one
+        - Retrieve
+        - Covenant
+      responses:
+        "200":
+          $ref: "#/components/responses/CovenantResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        default: 
+          $ref: "journaling.yaml#/components/responses/DefaultError"
+components:
+  responses: 
+    "CovenantResponse":
+      description: The successfully retrieved covenant.
+      content:
+        applicaton/json:
+          schema:
+            $ref: "#/components/schemas/Covenant"
+    "CovenantListResponse":
+      description: The successfully retrieved list of covenants.
+      content:
+        applicaton/json:
+          schema:
+            type: array
+            items: 
+              properties: 
+                id:
+                  $ref: "#/components/schemas/GUID"
+                value:
+                  $ref: "#/components/schemas/Covenant"
+              required:
+                - id
+                - value
+    "CreatedGuid":
+      description: The GUID of the successfully created resource.
+      content: 
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+        text/plain:
+          schema: 
+            $ref: "#/components/schemas/GUID"
+    "InvalidCovenant":
+      description: The covenant was invalid.
+      content: 
+        applciation/json:
+          schema: 
+            type: object
+            required: 
+              -  invalidProperties
+            properties: 
+              invalidProperties:
+                type: array
+                items: 
+                  type: object
+                  required: 
+                    - propertyName
+                  properties:
+                    propertyName: 
+                      description: The invalid property name.
+                      type: string
+                    message:
+                      type: string
+                      description: The error message.
+                    error:
+                      $ref: "#/components/schemas/Error"
+                    
+    "ConflictingUpdate":
+      description: The update causes a conflict.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: 
+              -  guids
+            properties:
+              guids: 
+                description: The problem causing GUIDS.
+                type: array
+                items: 
+                  $ref: "#/components/schemas/GUID"
+              strict:
+                description: "Is the conflict strict. 
+                
+                  A strict conflict must be handled with forced update
+                  creating new copies of conflicting entities."
+                type: boolean
+        text/plain:
+          schema:
+            type: string
+        text/html:
+          schema: 
+            type: string
+    "NotFoundResponse":
+      description: The resource was not found.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                required: 
+                  -  guid
+                properties: 
+                  guid: 
+                    $ref: "#/components/schemas/GUID"
+              - $ref: "#/components/schemas/Error"
+  schemas: 
+    GUID:
+      $ref: "./types.yaml#/components/schemas/GUID"
+    Error:
+      $ref: "./types.yaml#/components/schemas/Error"
+    VirtueType: 
+      oneOf: 
+        - type: string
+          pattern: "Generic"
+        - type: string
+          pattern: "Academic"
+        - type: string
+          pattern: "Martial"
+        - type: string
+          pattern: "Hermetic"
+        - type: string
+          pattern: "Supernatural"
+        - type: string
+          pattern: "Personality"
+        - type: string
+          pattern: "Story"
+        
+    VirtueCost:
+      oneOf:
+        - type: string
+          pattern: "Minor"
+        - type: string
+          pattern: "Major"
+        - type: string
+          pattern: "Free"
+
+    VirtueOrFlaw:
+      type: object
+      required:
+        - name
+        - type
+        - virtueTypes
+        - cost
+      properties:
+        name: 
+          type: string
+        type: 
+          oneOf:
+            - type: string
+              pattern: "^Virtue$"
+            - type: string
+              pattern: "^Flaw$"
+        virtueTypes:
+          type: array
+          minItems: 1
+          items:  
+            $ref: "#/components/schemas/VirtueType"
+        cost: 
+          $ref: "#/components/schemas/VirtueCost"
+
+    LabVirtueTypes: 
+      oneOf: 
+        - type: string
+          pattern: "Supernatural"
+        - type: string
+          pattern: "Outfitting"
+        - type: string
+          pattern: "Structure"
+
+    LabVirtue: 
+      allOf:
+        - $ref: "#/components/schemas/VirtueOrFlaw"
+        - type: object
+          properties:
+            type: 
+              type: string
+              pattern: "Virtue"
+            virtueTypes:
+              type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/LabVirtueTypes"
+          required:
+            - virtueTypes
+            - type
+
+    LabFlaw: 
+      allOf:
+        - $ref: "#/components/schemas/VirtueOrFlaw"
+        - type: object
+          properties:
+            type: 
+              type: string
+              pattern: "Flaw"
+            virtueTypes:
+              type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/LabVirtueTypes"
+          required:
+            - virtueTypes
+            - type
+ 
+
+    HookType: 
+      oneOf: 
+        - type: string
+          pattern: "Site"
+        - type: string
+          pattern: "Fortifications"
+        - type: string
+          pattern: "Resources"
+        - type: string
+          pattern: "Residents"
+        - type: string
+          pattern: "Relations"
+        - type: string
+          pattern: "Surroundings"
+
+    HookOrBoon:
+      type: object
+      required:
+        - name
+        - type
+        - hookTypes
+        - cost
+      properties:
+        name: 
+          type: string
+        type: 
+          oneOf:
+            - type: string
+              pattern: "^Virtue$"
+            - type: string
+              pattern: "^Flaw$"
+        hookTypes:
+          type: array
+          minItems: 1
+          items:  
+            $ref: "#/components/schemas/HookType"
+        cost: 
+          $ref: "#/components/schemas/VirtueCost"
+
+
+    Hook: 
+      allOf:
+        - $ref: "#/components/schemas/HookOrBoon"
+        - type: object
+          properties:
+            type: 
+              type: string
+              pattern: "^Hook$"
+    Boon: 
+      allOf:
+        - $ref: "#/components/schemas/HookOrBoon"
+        - type: object
+          properties:
+            type: 
+              type: string
+              pattern: "^Boon$"
+
+    HermeticLaboratory:
+      type: object
+      properties: 
+        size:
+          type: integer
+        virtues:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabVirtue"
+        flaws: 
+          type: array
+          items:
+            $ref: "#/components/schemas/LabFlaw"
+
+    Covenant:
+      type: object
+      properties:
+        name: 
+          type: string
+        boons: 
+          type: array
+          items: 
+            $ref: "#/components/schemas/Boon"
+        hooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hook"
+        laboratories:
+          type: array
+          items:
+            $ref: "#/components/schemas/HermeticLaboratory"
+      required:
+        - name
+        - boons
+        - hooks
+        
+    level:
+      oneOf: 
+        - type: integer
+        - type: string
+          pattern: ^Generic$
+    ArtKey:
+      oneOf: 
+        - $ref: "#/components/schemas/FormKey"
+        - $ref: "#/components/schemas/TechniqueKey"
+    TechniqueKey:
+      type: string
+      pattern: ^[A-Z][a-z]{1,5}$
+    FormKey:
+      type: string
+      pattern: ^\p[A-Z][a-z]{1,5}$
+    GameMechanics:
+      $ref: "mechanics.yaml#/components/schemas/GameMechanics"
+    Modifier:
+      $ref: "mechanics.yaml#/components/schemas/Modifier"
+    Reference:
+      $ref: "types.yaml#/components/schemas/Reference"
+  parameters:
+    id: 
+      name: id
+      description: A GUID idenfifier of an entity.
+      in: path
+      required: true
+      schema: 
+        $ref: "#/components/schemas/GUID"
+  securitySchemes: 
+    cookieApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/cookieApiKey"
+    headerApiKey:
+      $ref: "journaling.yaml#/components/securitySchemes/headerApiKey"
+    http:
+      $ref: "journaling.yaml#/components/securitySchemes/http"
+tags:
+  - name: one
+    description: Affects a single resource.
+  - name: all
+    description: Affects all resources.
+  - name: many
+    description: Affects several resources.
+  - name: guid
+    description: Global unique identifier.
+  - name: Valid Journal Date String
+    description: A valid journal date string. 
+  - name: get
+    description: GET HTTP method.
+  - name: delete
+    description: DELETE HTTP method.
+  - name: post
+    description: POST HTTP method.
+  - name: put
+    description: PUT HTTP method.
+  - name: Saga
+    description: The operation affects one or more sagas.
+  - name: Covenant
+    description: The operation affects one or more covenants. 
+  - name: Add
+    description: The operation adds one or more resources.
+  - name: Retrieve
+    description: The operation retrieves oen or more resources.
+  - name: Art
+    description: The art is either a verb or a noun of a magical system.
