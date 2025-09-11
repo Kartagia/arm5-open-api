@@ -39,7 +39,7 @@ paths:
             schema: 
               $ref: "#/components/schemas/SpellGuideline"
       responses: 
-        "200": 
+        "201": 
           $ref: "#/components/responses/CreatedGuid"
         "400":
           $ref: "#/components/responses/InvalidSpellGuideline"
