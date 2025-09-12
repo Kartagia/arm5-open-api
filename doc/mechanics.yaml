@@ -283,10 +283,12 @@ components:
           default: 1
         maximimum:
           type: integer
+          nullable: true
           minimum: 1
           default: 10
         minimum:
           type: integer
+          nullable: true
           minimum: 0
           default: 1
       default: 
@@ -320,7 +322,7 @@ components:
         name: Quality Die
         tag: qualitydie
         minimum: 1
-        maximum: 10
+        maximum: null
         expands:
           trigger:
             target: "result"
@@ -375,7 +377,10 @@ components:
                 - trigger:
                     $ref: "#/components/schemas/ExplosionTrigger"
                   result: 
-                    $ref: "#/components/schemas/Roll/default"
+                    formula:
+                      - 2
+                      - "*"
+                      - $ref: "#/components/schemas/QualityDie/default"
                 - trigger:
                     $ref: "#/components/schemas/BotchTrigger"
                   result:
@@ -421,15 +426,53 @@ components:
     Operators:
       type: string
       pattern: ^[-+*%(]|(?:[/)](?:\([duze]\))?)$
+
+    RoundingType:
+      oneOf:
+        - type: string
+          pattern: ^n(ormal)?$
+        - type: string
+          pattern: ^u(p)?$
+        - type: string
+          pattern: ^d(own)?$
+        - type: string
+          pattern: ^z(ero)?$
+        - type: string 
+          pattern: ^i(nfinit(y|ies))?$
+        - type: string
+          pattern: ^e(ven)?$
+        - type: string
+          pattern: ^o(dd)?$
+      default: "normal"
+
+    Rounding: 
+      type: object
+      properties:
+        precision:
+          type: integer
+          default: 0
+        rounding:
+          $ref: "#/components/schemas/RoundingType"
+
     RoundingUp:
-      type: string
-      pattern: ^\(u\)$
+      allOf:
+        - $ref: "#/components/schemas/RoundingType"
+        - type: object
+          pattern: ^\(u(p)?\)$
+      default: "(u)"
     RoundingDown:
-      type: string
-      pattern: ^\(d\)$
+      allOf:
+        - $ref: "#/components/schemas/RoundingType"
+        - type: object
+          pattern: ^\(d(own)?\)$
+      default: "(d)"
     RoundingZero:
-      type: string
-      pattern: ^\(z\)$  
+      allOf:
+        - $ref: "#/components/schemas/RoundingType"
+        - type: object
+          pattern: ^\(z(ero)?\)$
+      default: "(z)"
+
     RuleTarget: 
       $ref: "#/components/schemas/Tag"
  
