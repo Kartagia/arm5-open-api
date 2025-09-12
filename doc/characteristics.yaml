@@ -1,0 +1,26 @@
+components:
+  schemas:
+    CharacteristicValue:
+      - type: integer
+    Characteristic:
+      - type: object
+        properties:
+          name: string
+          abbrev: 
+            type: string
+            maxLength: 5
+            minLength: 2
+          score: CharacteristicValue
+        required:
+          - name
+    PersonCharacteristic:
+      allOf:
+        - $ref: "#/components/schemas/Characteristic"
+        - type: object
+          properties: 
+            aps: integer
+            score: 
+              type: integer
+              minimum: -5
+              maximum: +5
+          
