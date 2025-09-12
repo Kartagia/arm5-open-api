@@ -1,0 +1,121 @@
+
+components:
+  schemas:
+    NullableInt:
+      type: integer
+      nullable: true
+    Random: 
+      type: object
+      properties:
+        minimum: 
+          $ref: "#/components/schemas/NullableInt"
+        maximum:
+          $ref: "#/components/schemas/NullableInt"
+
+    SimpleDieRef: 
+      oneOf:
+        - type: string
+          pattern: ^d10\(\\d\)$
+        - type: string
+          pattern: ^simple die$
+      type: string
+      pattern: ^d10\(s\)$
+    QualityDieRef: 
+      oneOf:
+        - type: string
+          pattern: ^d10\(\\d\)$
+        - type: string
+          pattern: ^quality die$
+    StressDieRef: 
+      oneOf:
+        - type: string
+          pattern: ^d10\(r\d*\)$
+        - type: string
+          pattern: ^stress die(( with)? risk \d+)?$
+
+    SimpleDie:
+      type: object
+      properties:
+        minimum:
+          type: integer
+          nullable: true
+          default: 1
+        maximum:
+          type: integer
+          nullable: true
+          default: 10
+        step: 
+          type: integer
+          default: 1
+        values: 
+          type: array
+          items:
+            type: integer
+          default: [1,2,3,4,5,6,7,8,9,10]
+      default:
+        minimum: 1
+        maximum: 10
+        step: 1
+
+    QualityDie:
+      allOf:
+        - $ref: "#/components/schemas/Random"
+        - type: object
+          properties:
+            minimum: 
+              type: integer
+              default: 2
+            maximum: 
+              type: integer
+              nullable: true
+              default: null
+            chain: 
+              type: integer
+              default: 1
+            chainMultiplier: 
+              type: integer
+              default: 2
+            values: 
+              type: array
+              items:
+                type: integer
+              default: [1,2,3,4,5,6,7,8,9,10]
+      default:
+        minimum: 2
+        chain: 1
+        chainMultiplier: 2
+        values: [1,2,3,4,5,6,7,8,9,10]
+
+    StressDie:
+      allOf:
+        - $ref: "#/components/schemas/Random"
+        - type: object
+          properties:
+            minimum: 0
+            maximum: null
+            chain: 1
+            chainMultiplier: 2
+            botch: 10
+            risk: 
+              type: integer
+              default: 1
+            values: 
+              type: array
+              items:
+                type: integer
+              default: [1,2,3,4,5,6,7,8,9,0]
+            chainValues:
+              oneOf:
+                - type: 
+                    $ref: "#/components/schemas/Random"
+                - type: 
+                    $ref: "#/components/schemas/QualityDie"
+                - type: 
+                    $ref: "#/components/schemas/SimpleDie"
+              default:
+                $ref: "#/components/schemas/QualityDie/default"
+      default:
+        minimum: 0
+        maximum: null
+        values: [0, 1,2,3,4,5,6,7,8,9]
+
