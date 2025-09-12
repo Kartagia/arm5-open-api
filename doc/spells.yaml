@@ -304,8 +304,7 @@ components:
             $ref: "#/components/schemas/GameMechanics"
     SpellRequisite: 
       allOf: 
-        -  $ref: "#/components/schemas/GameMechanics"
-        - $ref: "#/components/schemas/Modifier"
+        - $ref: "#/components/schemas/MagnitudeModifier"
         - type: object
           properties:
             target: 
@@ -331,8 +330,42 @@ components:
         requiste: required
     GameMechanics:
       $ref: "mechanics.yaml#/components/schemas/GameMechanics"
-    Modifier:
-      $ref: "mechanics.yaml#/components/schemas/Modifier"
+
+    MagnitudeModifier:
+      allOf:
+        - $ref: "mechanics.yaml#/components/schemas/Modifier"
+        - type: object
+          properties:
+            operator:
+              type: string
+              pattern: ^M?[+-]$
+              default: "+"
+            value:
+              type: integer
+              default: 0
+          required:
+            - value
+      default:
+        value: 0
+
+    LevelModifier:
+      allOf:
+        - $ref: "mechanics.yaml#/components/schemas/Modifier"
+        - type: object
+          properties:
+            operator:
+              type: string
+              pattern: ^L?[+-]$
+              default: "+"
+            value:
+              type: integer
+              default: 0
+          required:
+            - value
+      default:
+        value: 0
+
+
     RDT:
       type: object
       properties:
@@ -427,8 +460,7 @@ components:
       type: object
       allOf:
         - $ref: "#/components/schemas/RDTInfo"
-        - $ref: "#/components/schemas/DurationProps"
-      
+        - $ref: "#/components/schemas/DurationProps"      
 
     Target:
       allOf:
