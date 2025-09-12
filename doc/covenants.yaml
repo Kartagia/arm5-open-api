@@ -520,6 +520,17 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/HermeticLaboratory"
+            vis:
+              type: object
+              properties:
+                sources: 
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/VisSource"
+                stores:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Vis"
       required:
         - name
         - boons
